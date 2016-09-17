@@ -482,13 +482,15 @@ def scan_sudoku(n=9):
     return sudokustring
 
 
-def check_ref_puzzle_str(puzzle_str, ref_puzzle_str=REF_PUZZLE_STR):
+def check_ref_puzzle_str(puzzle, ref_puzzle=REF_PUZZLE_STR):
     correct = True
-    for i in range(len(puzzle_str)):
-        if puzzle_str[i] != ref_puzzle_str[i]:
+    puzzle_compact = str(puzzle).replace('-', '0').replace(' ', '')
+    ref_puzzle_compact = str(ref_puzzle).replace('-', '0').replace(' ', '')
+    for i in range(len(puzzle_compact)):
+        if puzzle_compact[i] != ref_puzzle_compact[i]:
             print('Mismatch at row', i // 9, 'row', i % 9)
-            print('Read', puzzle_str[i], COLTABLE[int(puzzle_str[i])])
-            print('Expected', ref_puzzle_str[i], COLTABLE[int(ref_puzzle_str[i])])
+            print('Read', puzzle_compact[i], COLTABLE[int(puzzle_compact[i])])
+            print('Expected', ref_puzzle_compact[i], COLTABLE[int(ref_puzzle_compact[i])])
             correct = False
     if correct:
         print('Everything OK.')
