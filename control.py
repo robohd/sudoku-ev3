@@ -45,7 +45,7 @@ RX = 112
 RY = 41
 
 # Relative offsets that determine distance between color sensor and pen
-OFF_X = 140
+OFF_X = 150
 OFF_Y = -55
 
 CGX_CORR = 0
