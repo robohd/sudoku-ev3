@@ -1,0 +1,7 @@
+sudoku.txt
+refcolors.txt
+inet.sh
+
+__pycache__/
+*.py[cod]
+*$py.class
