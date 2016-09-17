@@ -45,14 +45,14 @@ RX = 112
 RY = 41
 
 # Relative offsets that determine distance between color sensor and pen
-OFF_X = 150
-OFF_Y = -52
+OFF_X = 140
+OFF_Y = -55
 
 CGX_CORR = 0
 CDOWN_CORR = 1
 
 # Distance between pen points in numbers
-PX = RX / 4
+PX = RX / 5
 PY = RY / 4
 
 PEN_IDLE_POS = 0
