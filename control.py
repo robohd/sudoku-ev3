@@ -30,7 +30,7 @@ import ev3dev.ev3 as ev3
 from time import sleep
 from math import sqrt
 
-from solve import Sudoku, solve, solve_file
+from solve import Sudoku, solve
 
 
 ### GLOBAL VARIABLES
@@ -143,14 +143,14 @@ csensor.mode = 'RGB-RAW'
 
 def reset():
     """
-    Reset eveRY motor to its initial configuration. This does not move anything.
+    Reset every motor to its initial configuration. This does not move anything.
     """
     a.reset()
     b.reset()
     c.reset()
     a.position = 0
     b.position = 0
-    #c.position = 0
+    c.position = 0
     a.speed_sp = SPEED_Y
     b.speed_sp = SPEED_X
     c.speed_sp = SPEED_C
@@ -329,12 +329,6 @@ def goto(x=0, y=0):
     while is_moving():
         sleep(MWT)
 
-#def gx(x=0):
-    #goto(x=x)
-
-#def gy(y=0):
-    #goto(y=y)
-
 def origin():
     goto(0, 0)
 
@@ -377,7 +371,6 @@ def calibcols(filename='refcolors.txt'):
 def getrefcols(filename='refcolors.txt'):
     with open(filename) as rf:
         content = rf.read().splitlines()
-        #print(content)
         refcols = []
         for line in content:
             if not line.strip() == '':
@@ -391,11 +384,14 @@ def minus(x, y):
         c.append(a - b)
     return c
 
+
 def norm(x):
     return abs(sqrt(sum([a**2 for a in x])))
 
+
 def dst(x,y):
     return norm(minus(x, y))
+
 
 def knn(x, refs, verbose=False, ultraverbose=False):
     """
@@ -416,32 +412,31 @@ def knn(x, refs, verbose=False, ultraverbose=False):
 def getrgb():
     return [csensor.value(0), csensor.value(1), csensor.value(2)]
 
+
 def getcol():
     mcol = [csensor.value(0), csensor.value(1), csensor.value(2)]
     return knn(mcol, getrefcols())
 
+
 def getcolname():
     return COLTABLE[getcol()]
-
-def printcolname():
-    print(getcolname)
-
-def printcolor():
-    c = getcol()
-    print(c, COLTABLE[c])
 
 
 def getnumber():
     return getcol()
 
+
 def col():
     return getcolname()
+
 
 def scol():
     ev3.Sound.speak(getcolname())
 
+
 def scolw():
     ev3.Sound.speak(getcolname()).wait()
+
 
 def pcol():
     print(col())
@@ -452,9 +447,6 @@ def pcol():
 def scan_sudoku(n=9):
     clist = []
     clist2d = []
-    #current_color = col()
-    #clist.append(current_color)
-    #print(current_color)
     for y in range(n):
         for x in range(n):
             if y % 2 == 1:
@@ -464,7 +456,6 @@ def scan_sudoku(n=9):
             current_number = getnumber()
             clist.append(current_number)
             print(current_number)
-            #scolw()
             pcol()
 
     for y in range(n):
@@ -472,12 +463,7 @@ def scan_sudoku(n=9):
             clist2d.append(clist[y*n:(y+1)*n][::-1])
         else:
             clist2d.append(clist[y*n:(y+1)*n])
-        #print(clist[i*n:(i+1)*n])
 
-    #print(clist)
-    #return clist
-
-    #print(clist2d)
     sudokustring = '\n'.join(' '.join([str(x) for x in l]) for l in clist2d)
     return sudokustring
 
@@ -523,10 +509,6 @@ if __name__ == '__main__':
     with open('sudoku.txt', 'w') as f:
         print(puzzle, file=f)
 
-    #input('Sudoku saved. Press Enter to continue with solving...')
-    #puzzle, result = solve_file('sudoku.txt')
-
-    #solution_raw = solve_file('sudoku.txt')
     solution = solve(puzzle)
 
     puzzle = str(puzzle)
@@ -539,5 +521,4 @@ if __name__ == '__main__':
         print('Sudoku could not be solved :(')
     else:
         write_solution(puzzle, solution)
-    my(-500) # push out
-    ev3.Sound.speak('eeeeeeeeeeeeeeeeeeeeeeeeeee').wait()
+    my(-500)  # push sheet out
