@@ -48,8 +48,10 @@ RY = 41
 OFF_X = 150
 OFF_Y = -55
 
-CGX_CORR = 0
-CDOWN_CORR = 1
+# Correction factors for physical biases
+PEN_GX_CORR = 0  # Motor moving more in positive direction than in negative direction
+#             # (This effect magically disappeared overnight, therefore now set to 0).
+PEN_DOWN_CORR = 1  # Compensate for slightly sloping table
 
 # Distance between pen points in numbers
 PX = RX / 5
@@ -62,7 +64,7 @@ MWT = 0.1  # Motor wait time (check interval for check if a motor is running)
 PEN_DOT_TIME = 0.1  # Time that is spent with pen being down (more time -> bigger dot for marker)
 
 # Map color numbers to color namese
-COLTABLE = {
+COLORTABLE = {
     0: 'white',
     1: 'yellow',
     2: 'dark green',
@@ -160,6 +162,10 @@ def reset():
 
 
 def is_moving(check_stall=False):
+    """
+    Check if any motor is currently running.
+    Necessary for blocking movement until the wanted position is reached.
+    """
     motor_states = a.state + b.state + c.state
     if check_stall and 'stalled' in motor_states:
         print('\nWarning: At least one motor is stalled. Check speed_sp attributes. States:')
@@ -169,18 +175,18 @@ def is_moving(check_stall=False):
     return 'running' in motor_states
 
 
-def cdown():
+def pen_down():
     """
     Move pen down to writing position.
     """
-    xmod = round(CDOWN_CORR * b.position / (RX*9))
+    xmod = round(PEN_DOWN_CORR * b.position / (RX * 9))
     c.run_to_abs_pos(position_sp=PEN_WRITE_POS+xmod)
     sleep(MWT)
     while is_moving():
         sleep(MWT)
 
 
-def cup():
+def pen_up():
     """
     Move pen up to neutral position.
     """
@@ -190,34 +196,34 @@ def cup():
         sleep(MWT)
 
 
-def cdot():
+def pen_dot():
     """
     Make a dot with the pen at the current position.
     """
-    cdown()
+    pen_down()
     sleep(PEN_DOT_TIME)
-    cup()
+    pen_up()
 
 
 # HOW TO WRITE NUMBERS ON PAPER
 
 def one():
-    cdot()
+    pen_dot()
 
 
 def two():
-    cdot()
+    pen_dot()
     mx(-PX)
-    cdot()
+    pen_dot()
     mx(PX)
 
 
 def three():
-    cdot()
+    pen_dot()
     mx(-PX)
-    cdot()
+    pen_dot()
     mx(-PX)
-    cdot()
+    pen_dot()
     mx(2*PX)
 
 
@@ -264,6 +270,11 @@ def nine():
 
 
 def write_number(n):
+    """
+    Make n dots at the current position.
+
+    The position should be adjusted before by pen_gfield().
+    """
     {
         1: one,
         2: two,
@@ -278,6 +289,9 @@ def write_number(n):
 
 
 def move(dx=0, dy=0):
+    """
+    Turn motors b and a by (dx, dy) degrees.
+    """
     if dy != 0:
         a.run_to_rel_pos(position_sp=dy)
     if dx != 0:
@@ -296,7 +310,7 @@ def my(dy=0):
 
 
 def mfield(nx=0, ny=0):
-    """ move n fields """
+    """ move (nx, ny) fields """
     fy = ny*RY
     fx = nx*RX
     if fy != a.position:
@@ -309,7 +323,7 @@ def mfield(nx=0, ny=0):
 
 
 def gfield(nx=0, ny=0):
-    """ move to field (nx, ny) """
+    """ Move  color sensor to field (nx, ny) """
     fy = ny*RY
     fx = nx*RX
     if fy != a.position:
@@ -321,8 +335,13 @@ def gfield(nx=0, ny=0):
         sleep(MWT)
 
 
-def cgfield(nx=0, ny=0, off_x=OFF_X, off_y=OFF_Y):
-    xmod = -round(CGX_CORR * b.position/(RX*9))
+def pen_gfield(nx=0, ny=0, off_x=OFF_X, off_y=OFF_Y):
+    """
+    Move the pen above field (nx, ny) so we can begin writing a number in this field.
+
+    (off_x, off_y) is the relative offset between the color sensor and the pen (in motor angles).
+    """
+    xmod = -round(PEN_GX_CORR * b.position / (RX * 9))
     fy = ny*RY + off_y
     fx = nx*RX + off_x + xmod
     if fy != a.position:
@@ -335,11 +354,14 @@ def cgfield(nx=0, ny=0, off_x=OFF_X, off_y=OFF_Y):
 
 
 def goto(x=0, y=0):
+    """
+    Move motors to absolute position (x, y) (in angles, not fields).
+    """
     fy = y
     fx = x
-    if y != a.position:
+    if fy != a.position:
         a.run_to_abs_pos(position_sp=y)
-    if x != b.position:
+    if fx != b.position:
         b.run_to_abs_pos(position_sp=x)
     sleep(MWT)
     while is_moving():
@@ -352,12 +374,12 @@ def origin():
 
 ## COLOR CONTROL
 
-def calibcols(filename='refcolors.txt'):
+def calibrate_colors(filename='refcolors.txt'):
     """
     Calibrate the color sensor, starting in the white space
     in front of the yellow field on the calibration strip.
     """
-    refcols = []
+    refcolors = []
     with open(filename, 'w') as f:
 
         def save_color(index, print_info=True):
@@ -367,9 +389,9 @@ def calibcols(filename='refcolors.txt'):
             # Write to file
             print(csensor.value(0), csensor.value(1), csensor.value(2), file=f, flush=True)
             if print_info:  # Write to stdout
-                print(COLTABLE[index], csensor.value(0), csensor.value(1), csensor.value(2), flush=True)
+                print(COLORTABLE[index], csensor.value(0), csensor.value(1), csensor.value(2), flush=True)
 
-            refcols.append([csensor.value(0), csensor.value(1), csensor.value(2)])
+            refcolors.append([csensor.value(0), csensor.value(1), csensor.value(2)])
 
         # White
         save_color(0)
@@ -382,25 +404,25 @@ def calibcols(filename='refcolors.txt'):
             save_color(i + 2)
     my(73/42 * RY)  # Move to first sudoku field
 
-    return refcols
+    return refcolors
 
 
-def getrefcols(filename='refcolors.txt'):
+def getrefcolors(filename='refcolors.txt'):
     """
-    Read ordered reference color values from a file that was written in the calibration step (calibcols()).
+    Read ordered reference color values from a file that was written in the calibration step (calibrate_colors()).
     """
     with open(filename) as rf:
         content = rf.read().splitlines()
-        refcols = []
+        refcolors = []
         for line in content:
             if not line.strip() == '':
-                refcols.append([int(n) for n in line.split()])
-    return refcols
+                refcolors.append([int(n) for n in line.split()])
+    return refcolors
 
 
 def minus(x, y):
     """
-    Elementwise substraction of two lists of numbers (vectors)
+    Elementwise substraction of two lists of numbers (vectors).
     """
     c = []
     for a, b in zip(x, y):
@@ -415,48 +437,47 @@ def norm(x):
     return abs(sqrt(sum([a**2 for a in x])))
 
 
-def dst(x,y):
+def dst(x, y):
     """
-    Compute euclidian distance of two lists of numbers (vectors)
+    Compute euclidian distance of two lists of numbers (vectors).
     """
     return norm(minus(x, y))
 
 
-def knn(x, refs, verbose=False, ultraverbose=False):
+def nearest_neighbor(color, refcolors):
     """
-    Classify RGB value as a color number using a color table (refs)
-    and the k-nearest-neighbors algorithm (where k == 1 here)
+    Classify RGB value as a color number using a reference color list (refcolors)
+    and the k-nearest-neighbors algorithm (where k == 1).
     """
-    dl = []
-    for ref in refs:
-        dl.append([ref, dst(x,ref)])
-    dl.sort(key=lambda x: x[1])
-    if ultraverbose:
-        return refs.index(dl[0][0]), dl
-    if verbose:
-        return refs.index(dl[0][0]), dl[0]
-    return refs.index(dl[0][0])
+    color_distances = []
+    for ref in refcolors:
+        # Store reference color with its euclidian distance to the currently examined color
+        color_distances.append([ref, dst(color, ref)])
+    color_distances.sort(key=lambda x: x[1])  # Sort by distance -> First element is the nearest neighbor.
+    return refcolors.index(color_distances[0][0])  # Return index (= number) of nearest color.
 
 
 def getrgb():
+    """
+    Output currently measured raw RGB value in the form [red, green, blue].
+    """
     return [csensor.value(0), csensor.value(1), csensor.value(2)]
 
 
-def getcol():
+def read_number():
+    """
+    Read color value and classify it using one of the reference colors by finding the nearest neighbor.
+    """
     mcol = [csensor.value(0), csensor.value(1), csensor.value(2)]
-    return knn(mcol, getrefcols())
+    return nearest_neighbor(mcol, getrefcolors())
 
 
-def getcolname():
-    return COLTABLE[getcol()]
-
-
-def getnumber():
-    return getcol()
+def getcolorname():
+    return COLORTABLE[read_number()]
 
 
 def scolw():
-    ev3.Sound.speak(getcolname()).wait()
+    ev3.Sound.speak(getcolorname()).wait()
 
 
 ## HIGH-LEVEL SUDOKU SOLVING ROUTINES
@@ -472,15 +493,16 @@ def scan_sudoku(n=9, print_output=True):
     clist2d = []
     for y in range(n):
         for x in range(n):
+            # Reverse scan direction in every odd line to reduce unnecessary movements
             if y % 2 == 1:
                 gfield(n - x - 1, y)
             else:
                 gfield(x, y)
-            current_number = getnumber()
+            current_number = read_number()
             clist.append(current_number)
             if print_output:
                 print(current_number)
-                print(getcolname())
+                print(getcolorname())
 
     for y in range(n):
         if y % 2 == 1:
@@ -502,8 +524,8 @@ def check_ref_puzzle_str(puzzle, ref_puzzle=REF_PUZZLE_STR):
     for i in range(len(puzzle_compact)):
         if puzzle_compact[i] != ref_puzzle_compact[i]:
             print('Mismatch at row', i // 9, 'row', i % 9)
-            print('Read', puzzle_compact[i], COLTABLE[int(puzzle_compact[i])])
-            print('Expected', ref_puzzle_compact[i], COLTABLE[int(ref_puzzle_compact[i])])
+            print('Read', puzzle_compact[i], COLORTABLE[int(puzzle_compact[i])])
+            print('Expected', ref_puzzle_compact[i], COLORTABLE[int(ref_puzzle_compact[i])])
             correct = False
     if correct:
         print('Everything OK.')
@@ -525,7 +547,7 @@ def write_solution(puzzle=Sudoku(EXAMPLE_PUZZLE_STR), solution=Sudoku(EXAMPLE_SO
     unknown_indices = [[i for i, j in enumerate(row) if int(j) == 0] for row in puzzle_rows]
     for y, x_values in enumerate(unknown_indices):
         for x in x_values:
-            cgfield(x, y)
+            pen_gfield(x, y)
             write_number(int(solution_rows[y][x]))
 
 
@@ -538,7 +560,7 @@ reset()  # This needs to stay here to initialize motors with speeds
 
 
 if __name__ == '__main__':
-    calibcols()
+    calibrate_colors()
     reset()
     puzzle_raw = scan_sudoku()
     puzzle = Sudoku(puzzle_raw)
