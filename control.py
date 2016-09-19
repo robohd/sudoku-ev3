@@ -168,6 +168,7 @@ def is_moving(check_stall=False):
         print('C:', c.state)
     return 'running' in motor_states
 
+
 def cdown():
     """
     Move pen down to writing position.
@@ -178,6 +179,7 @@ def cdown():
     while is_moving():
         sleep(MWT)
 
+
 def cup():
     """
     Move pen up to neutral position.
@@ -186,6 +188,7 @@ def cup():
     sleep(MWT)
     while is_moving():
         sleep(MWT)
+
 
 def cdot():
     """
@@ -201,11 +204,13 @@ def cdot():
 def one():
     cdot()
 
+
 def two():
     cdot()
     mx(-PX)
     cdot()
     mx(PX)
+
 
 def three():
     cdot()
@@ -215,20 +220,24 @@ def three():
     cdot()
     mx(2*PX)
 
+
 def four():
     two()
     my(PY)
     two()
+
 
 def five():
     three()
     my(PY)
     two()
 
+
 def six():
     three()
     my(PY)
     three()
+
 
 def seven():
     three()
@@ -237,12 +246,14 @@ def seven():
     my(PY)
     one()
 
+
 def eight():
     three()
     my(PY)
     three()
     my(PY)
     two()
+
 
 def nine():
     three()
@@ -275,11 +286,14 @@ def move(dx=0, dy=0):
     while is_moving():
         sleep(MWT)
 
+
 def mx(dx=0):
     move(dx=dx)
 
+
 def my(dy=0):
     move(dy=dy)
+
 
 def mfield(nx=0, ny=0):
     """ move n fields """
@@ -292,6 +306,7 @@ def mfield(nx=0, ny=0):
     sleep(MWT)
     while is_moving():
         sleep(MWT)
+
 
 def gfield(nx=0, ny=0):
     """ move to field (nx, ny) """
@@ -318,6 +333,7 @@ def cgfield(nx=0, ny=0, off_x=OFF_X, off_y=OFF_Y):
     while is_moving():
         sleep(MWT)
 
+
 def goto(x=0, y=0):
     fy = y
     fx = x
@@ -328,6 +344,7 @@ def goto(x=0, y=0):
     sleep(MWT)
     while is_moving():
         sleep(MWT)
+
 
 def origin():
     goto(0, 0)
@@ -369,6 +386,9 @@ def calibcols(filename='refcolors.txt'):
 
 
 def getrefcols(filename='refcolors.txt'):
+    """
+    Read ordered reference color values from a file that was written in the calibration step (calibcols()).
+    """
     with open(filename) as rf:
         content = rf.read().splitlines()
         refcols = []
@@ -379,6 +399,9 @@ def getrefcols(filename='refcolors.txt'):
 
 
 def minus(x, y):
+    """
+    Elementwise substraction of two lists of numbers (vectors)
+    """
     c = []
     for a, b in zip(x, y):
         c.append(a - b)
@@ -386,10 +409,16 @@ def minus(x, y):
 
 
 def norm(x):
+    """
+    Compute euclidian norm of a list of numbers (vector)
+    """
     return abs(sqrt(sum([a**2 for a in x])))
 
 
 def dst(x,y):
+    """
+    Compute euclidian distance of two lists of numbers (vectors)
+    """
     return norm(minus(x, y))
 
 
@@ -426,25 +455,19 @@ def getnumber():
     return getcol()
 
 
-def col():
-    return getcolname()
-
-
-def scol():
-    ev3.Sound.speak(getcolname())
-
-
 def scolw():
     ev3.Sound.speak(getcolname()).wait()
 
 
-def pcol():
-    print(col())
-
-
 ## HIGH-LEVEL SUDOKU SOLVING ROUTINES
 
-def scan_sudoku(n=9):
+def scan_sudoku(n=9, print_output=True):
+    """
+    Scans the sudoku by moving to all fields, measuring their color values and classifying them as numbers.
+    Returns a string representation of the sudoku.
+
+    If n != 9, scanning will work in a smaller/larger square, but solving will be impossible of course.
+    """
     clist = []
     clist2d = []
     for y in range(n):
@@ -455,8 +478,9 @@ def scan_sudoku(n=9):
                 gfield(x, y)
             current_number = getnumber()
             clist.append(current_number)
-            print(current_number)
-            pcol()
+            if print_output:
+                print(current_number)
+                print(getcolname())
 
     for y in range(n):
         if y % 2 == 1:
@@ -469,6 +493,9 @@ def scan_sudoku(n=9):
 
 
 def check_ref_puzzle_str(puzzle, ref_puzzle=REF_PUZZLE_STR):
+    """
+    Check if the read puzzle is the same as the saved reference puzzle.
+    """
     correct = True
     puzzle_compact = str(puzzle).replace('-', '0').replace(' ', '')
     ref_puzzle_compact = str(ref_puzzle).replace('-', '0').replace(' ', '')
@@ -482,7 +509,16 @@ def check_ref_puzzle_str(puzzle, ref_puzzle=REF_PUZZLE_STR):
         print('Everything OK.')
     return correct
 
+
 def write_solution(puzzle=Sudoku(EXAMPLE_PUZZLE_STR), solution=Sudoku(EXAMPLE_SOLUTION_STR)):
+    """
+    Writes a solution down on the sheet of paper by making dots representing numbers.
+
+    "puzzle" and "solution" are both either strings or solve.Sudoku objects (the latter ones are
+    automatically converted to strings).
+
+    The "puzzle" parameter has to be passed to show where the unknown numbers were.
+    """
     # Create compact rows of the sudoku representation. Their elements are always castable to int.
     puzzle_rows = [row.replace('-', '0').replace(' ', '') for row in str(puzzle).splitlines()]
     solution_rows = [row.replace(' ', '') for row in str(solution).splitlines()]
