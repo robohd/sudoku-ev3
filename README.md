@@ -6,6 +6,8 @@ Using
 * https://github.com/rhempel/ev3dev-lang-python (at commit def97386dc4123a4a668d6ebe35a3baf00980f71)
 * Python 3.4 (Lower versions won't work).
 
+Project website (in German) with demo video: http://joanna.iwr.uni-heidelberg.de/projects/2016SS_SUDOKU/index.html
+
 To set up the main brick, ssh into it and run:
 
     $ sudo apt install python3-pip git # May take about an hour, be patient.
