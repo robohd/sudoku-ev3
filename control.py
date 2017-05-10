@@ -63,7 +63,7 @@ PEN_WRITE_POS = 6
 MWT = 0.1  # Motor wait time (check interval for check if a motor is running)
 PEN_DOT_TIME = 0.1  # Time that is spent with pen being down (more time -> bigger dot for marker)
 
-# Map color numbers to color namese
+# Map color numbers to color names
 COLORTABLE = {
     0: 'white',
     1: 'yellow',
@@ -77,7 +77,7 @@ COLORTABLE = {
     9: 'orange',
 }
 
-## Example of a Sudoku with its solution
+## Example of a sudoku with its solution
 
 EXAMPLE_PUZZLE_STR = """
 0 3 0 0 5 0 0 4 0
